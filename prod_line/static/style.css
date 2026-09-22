@@ -1,0 +1,18 @@
+body {
+  font-family: sans-serif;
+  margin: 2rem;
+}
+
+.image-box {
+  max-width: 640px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.image-box img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}

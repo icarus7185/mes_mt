@@ -1,0 +1,51 @@
+body {
+  font-family: sans-serif;
+  margin: 2rem;
+}
+
+.image-box {
+  max-width: 640px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.image-box img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.album-box {
+  max-width: 900px;
+  margin-top: 1.5rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.album-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.album-grid figure {
+  margin: 0;
+  width: 120px;
+  text-align: center;
+}
+
+.album-grid img {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.album-grid figcaption {
+  font-size: 0.8rem;
+  color: #555;
+}

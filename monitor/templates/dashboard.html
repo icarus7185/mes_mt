@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monitor Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <h1>Monitor Dashboard</h1>
+
+  <div class="image-box">
+    <h2>Cảnh báo lỗi mới nhất từ Center</h2>
+    <img id="processed-image" src="/api/image/latest" alt="Processed image" />
+    <p>Thời gian nhận: <span id="received-at">--:--:--</span></p>
+  </div>
+
+  <div class="album-box">
+    <h2>10 sản phẩm lỗi gần nhất do Center phát hiện</h2>
+    <div id="album" class="album-grid"></div>
+  </div>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

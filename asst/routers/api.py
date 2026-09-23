@@ -7,6 +7,7 @@ import logging
 from fastapi import APIRouter, Request, UploadFile
 
 from asst.config import settings
+from asst.services.analyst_service import predict_one, train_model
 from asst.services.image_service import ImageService
 from asst.services.yolo_service import YoloService
 
@@ -20,6 +21,33 @@ yolo_service = YoloService(
     repo_id=settings.hf_model_repo_id,
     filename=settings.hf_model_filename,
 )
+
+
+@router.get("/train")
+def train_analyst_model() -> dict:
+    """Train the energy-usage model using the configured CSV file."""
+    result = train_model(settings.training_csv_path)
+    return {"status": "success", **result}
+
+
+@router.post("/record")
+async def receive_record(request: Request, record: dict) -> dict:
+    """Predict Usage_kWh for a tabular record from prod_line, fill it in,
+    and forward the record to monitor.
+    """
+    logger.info("Received record date=%s", record.get("date"))
+
+    usage_kwh = predict_one(record, settings.analyst_model_path)
+    record["Usage_kWh"] = usage_kwh
+
+    response = await request.app.state.http_client.post(
+        settings.monitor_record_url,
+        json=record,
+    )
+    response.raise_for_status()
+    logger.info("Forwarded record date=%s Usage_kWh=%.3f to monitor", record.get("date"), usage_kwh)
+
+    return {"status": "ok", "Usage_kWh": usage_kwh}
 
 
 @router.post("/image")

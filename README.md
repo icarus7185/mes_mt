@@ -101,6 +101,8 @@ Sau đó mở:
 **Lưu ý:** tất cả đường dẫn thư mục (`data/...`, `logs/...`) đều là
 đường dẫn tương đối, nên phải chạy `uvicorn` từ thư mục gốc của dự án.
 
+**Note** Trên window 11 nếu bị lỗi không chạy được pandas, numpy thì có thể phải tắt Smart App Control (SAC). Đây không phải lỗi phần mềm.
+
 ## Ghi log
 
 Mỗi app ghi log ra file riêng trong thư mục `logs/` (tạo tương đối theo

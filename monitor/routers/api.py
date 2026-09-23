@@ -10,12 +10,14 @@ from fastapi import APIRouter, HTTPException, Response, UploadFile
 
 from monitor.config import settings
 from monitor.services.history_service import HistoryService
+from monitor.services.record_service import RecordHistoryService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
 
 history_service = HistoryService(hist_dir=settings.hist_dir, max_files=settings.hist_max_files)
+record_history_service = RecordHistoryService(max_items=settings.record_max_items)
 
 
 def _received_at(path) -> str:
@@ -58,6 +60,20 @@ async def list_history() -> dict:
             for path in history_service.list_files()
         ]
     }
+
+
+@router.post("/record")
+async def receive_record(record: dict) -> dict:
+    """Store a predicted tabular record pushed by asst."""
+    logger.info("Received record date=%s Usage_kWh=%s", record.get("date"), record.get("Usage_kWh"))
+    record_history_service.add(record)
+    return {"status": "ok"}
+
+
+@router.get("/records")
+async def list_records() -> dict:
+    """List predicted tabular records, newest first, for the dashboard grid."""
+    return {"records": record_history_service.list_all()}
 
 
 @router.get("/hist/{filename}")

@@ -19,6 +19,38 @@ function renderAlbum(images) {
   }
 }
 
+function formatNumber(value) {
+  return typeof value === "number" ? value.toFixed(2) : "--";
+}
+
+function renderRecords(records) {
+  const body = document.getElementById("records-body");
+  body.innerHTML = "";
+  for (const record of records) {
+    const row = document.createElement("tr");
+    const cells = [
+      { value: record.date ?? "--" },
+      { value: formatNumber(record["Lagging_Current_Reactive.Power_kVarh"]) },
+      { value: formatNumber(record.Leading_Current_Reactive_Power_kVarh) },
+      { value: formatNumber(record["CO2(tCO2)"]) },
+      { value: formatNumber(record.Lagging_Current_Power_Factor) },
+      { value: formatNumber(record.Leading_Current_Power_Factor) },
+      { value: record.NSM ?? "--" },
+      { value: record.Load_Type ?? "--" },
+      { value: formatNumber(record.Usage_kWh), highlight: true },
+    ];
+    for (const { value, highlight } of cells) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      if (highlight) {
+        cell.classList.add("usage-kwh-cell");
+      }
+      row.appendChild(cell);
+    }
+    body.appendChild(row);
+  }
+}
+
 async function refresh() {
   const timestamp = Date.now();
   document.getElementById("processed-image").src = `/api/image/latest?t=${timestamp}`;
@@ -35,6 +67,14 @@ async function refresh() {
     const response = await fetch(`/api/hist?t=${timestamp}`);
     const hist = await response.json();
     renderAlbum(hist.images);
+  } catch (err) {
+    // Ignore transient fetch errors; the next tick will retry.
+  }
+
+  try {
+    const response = await fetch(`/api/records?t=${timestamp}`);
+    const data = await response.json();
+    renderRecords(data.records);
   } catch (err) {
     // Ignore transient fetch errors; the next tick will retry.
   }

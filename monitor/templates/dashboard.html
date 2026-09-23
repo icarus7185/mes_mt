@@ -8,15 +8,39 @@
 <body>
   <h1>Monitor Dashboard</h1>
 
-  <div class="image-box">
-    <h2>Cảnh báo lỗi mới nhất từ Center</h2>
-    <img id="processed-image" src="/api/image/latest" alt="Processed image" />
-    <p>Thời gian nhận: <span id="received-at">--:--:--</span></p>
-  </div>
+  <div class="dashboard-layout">
+    <div class="records-box">
+      <h2>Dự đoán Usage_kWh từ Analyst</h2>
+      <div class="records-scroll">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Lagging kVarh</th>
+              <th>Leading kVarh</th>
+              <th>CO2</th>
+              <th>Lagging PF</th>
+              <th>Leading PF</th>
+              <th>NSM</th>
+              <th>Load Type</th>
+              <th class="usage-kwh-col">Usage_kWh (dự đoán ML)</th>
+            </tr>
+          </thead>
+          <tbody id="records-body"></tbody>
+        </table>
+      </div>
+    </div>
 
-  <div class="album-box">
-    <h2>10 sản phẩm lỗi gần nhất do Center phát hiện</h2>
-    <div id="album" class="album-grid"></div>
+    <div class="image-box">
+      <h2>Cảnh báo lỗi mới nhất từ Center</h2>
+      <img id="processed-image" src="/api/image/latest" alt="Processed image" />
+      <p>Thời gian nhận: <span id="received-at">--:--:--</span></p>
+    </div>
+
+    <div class="album-box">
+      <h2>10 sản phẩm lỗi gần nhất do Center phát hiện</h2>
+      <div id="album" class="album-grid"></div>
+    </div>
   </div>
 
   <script src="/static/dashboard.js"></script>

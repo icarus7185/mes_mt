@@ -10,7 +10,7 @@ class Settings(BaseModel):
     image_in_dir: Path = Path("prod_line/data/from_camera")
 
     # How often, in seconds, to pick and send a new image.
-    interval_seconds: float = 10.0
+    interval_seconds: float = 3.0
 
     # URL of the asst service's image-intake endpoint.
     asst_image_url: str = "http://localhost:8002/api/image"
@@ -23,7 +23,7 @@ class Settings(BaseModel):
     tabular_csv_path: Path = Path("prod_line/data/tabular/Steel_industry_data.csv")
 
     # How often, in seconds, to pick and send a new tabular record.
-    record_interval_seconds: float = 20.0
+    record_interval_seconds: float = 15.0
 
     # URL of the asst service's record-intake endpoint.
     asst_record_url: str = "http://localhost:8002/api/record"

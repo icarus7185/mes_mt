@@ -9,6 +9,7 @@ import logging
 import httpx
 
 from prod_line.config import settings
+from prod_line.record_state import record_history_state
 from prod_line.services.record_service import RecordService
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ record_service = RecordService(csv_path=settings.tabular_csv_path)
 
 async def send_record_once(client: httpx.AsyncClient) -> None:
     record = record_service.get_random_record()
+    await record_history_state.add(record)
     try:
         response = await client.post(settings.asst_record_url, json=record)
         response.raise_for_status()

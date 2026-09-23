@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Response, UploadFile
 
 from monitor.config import settings
 from monitor.services.history_service import HistoryService
+from monitor.services.record_csv_service import RecordCsvService
 from monitor.services.record_service import RecordHistoryService
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,7 @@ router = APIRouter(prefix="/api")
 
 history_service = HistoryService(hist_dir=settings.hist_dir, max_files=settings.hist_max_files)
 record_history_service = RecordHistoryService(max_items=settings.record_max_items)
+record_csv_service = RecordCsvService(csv_dir=settings.tabular_dir)
 
 
 def _received_at(path) -> str:
@@ -67,6 +69,7 @@ async def receive_record(record: dict) -> dict:
     """Store a predicted tabular record pushed by asst."""
     logger.info("Received record date=%s Usage_kWh=%s", record.get("date"), record.get("Usage_kWh"))
     record_history_service.add(record)
+    record_csv_service.append(record)
     return {"status": "ok"}
 
 

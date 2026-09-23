@@ -24,6 +24,9 @@ class Settings(BaseModel):
     # URL of the asst service's record-intake endpoint.
     asst_record_url: str = "http://localhost:8002/api/record"
 
+    # Maximum number of tabular records to keep for the dashboard grid.
+    record_max_items: int = 20
+
     host: str = "0.0.0.0"
     port: int = 8001
 

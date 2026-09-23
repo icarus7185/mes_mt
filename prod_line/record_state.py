@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import deque
+from datetime import datetime
 
 from prod_line.config import settings
 
@@ -12,8 +13,10 @@ class RecordHistoryState:
         self._records: deque[dict] = deque(maxlen=max_items)
 
     async def add(self, record: dict) -> None:
+        entry = dict(record)
+        entry["added_at"] = datetime.now().strftime("%H:%M:%S")
         async with self._lock:
-            self._records.appendleft(record)
+            self._records.appendleft(entry)
 
     async def list_all(self) -> list[dict]:
         async with self._lock:

@@ -1,7 +1,9 @@
-"""Picks a random tabular record, stamps it with the current time, and
-clears its Usage_kWh value so asst can fill in a fresh prediction.
+"""Walks the tabular CSV from a randomly chosen starting row, stepping by
+``skip`` rows on each subsequent read, and stamps each record with the
+current time while clearing its Usage_kWh value so asst can predict it.
 """
 
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -11,15 +13,25 @@ DATE_FORMAT = "%d/%m/%Y %H:%M"
 
 
 class RecordService:
-    def __init__(self, csv_path: Path) -> None:
+    def __init__(self, csv_path: Path, skip: int = 2) -> None:
         self._data = pd.read_csv(csv_path)
+        self._skip = skip
+        self._position = 0
+        self.reset_random_position()
 
-    def get_random_record(self) -> dict:
-        row = self._data.sample(n=1).iloc[0]
+    def reset_random_position(self) -> None:
+        """Jump to a random row; the next read starts from there."""
+        self._position = random.randrange(len(self._data))
+
+    def get_next_record(self) -> dict:
+        """Return the record at the current position, then advance by ``skip``."""
+        row = self._data.iloc[self._position]
         record = {
             column: (value.item() if hasattr(value, "item") else value)
             for column, value in row.items()
         }
         record["date"] = datetime.now().strftime(DATE_FORMAT)
         record["Usage_kWh"] = None
+
+        self._position = (self._position + self._skip) % len(self._data)
         return record

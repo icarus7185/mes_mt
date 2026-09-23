@@ -10,6 +10,7 @@ function renderRecords(records) {
   for (const record of records) {
     const row = document.createElement("tr");
     const cells = [
+      record.added_at ?? "--",
       formatNumber(record["Lagging_Current_Reactive.Power_kVarh"]),
       formatNumber(record.Leading_Current_Reactive_Power_kVarh),
       formatNumber(record["CO2(tCO2)"]),

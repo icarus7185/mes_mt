@@ -6,25 +6,26 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <h1>Ảnh chụp từ camera (giả lập)</h1>
+  <h1>Dữ liệu MES từ xưởng (giả lập)</h1>
 
   <div class="image-box">
-    <h2>Ảnh vừa gửi tới Center</h2>
+    <h2>Ảnh chụp bề mặt tấm thép</h2>
     <img id="sent-image" src="/api/image/latest" alt="Sent image" />
-    <p>Thời gian đã gửi: <span id="sent-at">--:--:--</span></p>
+    <!-- <p>Thời gian đã gửi: <span id="sent-at">--:--:--</span></p> -->
   </div>
 
   <div class="records-box">
-    <h2>Dữ liệu vừa gửi tới Analyst</h2>
+    <h2>Thông số cảm biến trên dây chuyền</h2>
     <div class="records-scroll">
       <table class="records-table">
         <thead>
           <tr>
-            <th>Lagging kVarh</th>
-            <th>Leading kVarh</th>
+            <th>Thời<br />gian</th>
+            <th>Lagging<br />kVarh</th>
+            <th>Leading<br />kVarh</th>
             <th>CO2</th>
-            <th>Lagging PF</th>
-            <th>Leading PF</th>
+            <th>Lagging<br />PF</th>
+            <th>Leading<br />PF</th>
             <th>NSM</th>
             <th>Load Type</th>
           </tr>

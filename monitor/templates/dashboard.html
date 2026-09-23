@@ -10,20 +10,20 @@
 
   <div class="dashboard-layout">
     <div class="records-box">
-      <h2>Dự đoán Usage_kWh từ Analyst</h2>
+      <h2>Dự đoán công suất tiêu thụ (kWh)</h2>
       <div class="records-scroll">
         <table class="records-table">
           <thead>
             <tr>
               <th>Thời gian</th>
-              <th>Lagging kVarh</th>
-              <th>Leading kVarh</th>
+              <th>Lagging<br />kVarh</th>
+              <th>Leading<br />kVarh</th>
               <th>CO2</th>
-              <th>Lagging PF</th>
-              <th>Leading PF</th>
+              <th>Lagging<br />PF</th>
+              <th>Leading<br />PF</th>
               <th>NSM</th>
               <th>Load Type</th>
-              <th class="usage-kwh-col">Usage_kWh (dự đoán ML)</th>
+              <th class="usage-kwh-col">Công suất<br />tiêu thụ</th>
             </tr>
           </thead>
           <tbody id="records-body"></tbody>
@@ -31,16 +31,31 @@
       </div>
     </div>
 
+    <div class="chart-box">
+      <h2>Biến động công suất tiêu thụ dự đoán (kWh)</h2>
+      <div class="chart-wrap">
+        <svg id="usage-chart" viewBox="0 0 640 220" preserveAspectRatio="none" role="img" aria-label="Biểu đồ biến động Usage_kWh dự đoán theo thời gian"></svg>
+        <div id="chart-tooltip" class="chart-tooltip" hidden></div>
+        <p id="chart-empty" class="chart-empty">Chưa có dữ liệu dự đoán.</p>
+      </div>
+    </div>
+
     <div class="image-box">
-      <h2>Cảnh báo lỗi mới nhất từ Center</h2>
+      <h2>Cảnh báo phát hiện lỗi trên bề mặt tấm thép</h2>
       <img id="processed-image" src="/api/image/latest" alt="Processed image" />
       <p>Thời gian nhận: <span id="received-at">--:--:--</span></p>
     </div>
 
     <div class="album-box">
-      <h2>10 sản phẩm lỗi gần nhất do Center phát hiện</h2>
+      <h2>10 bề mặt lỗi gần nhất do hệ thống phát hiện</h2>
       <div id="album" class="album-grid"></div>
     </div>
+  </div>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <button id="lightbox-close" class="lightbox-close" type="button" aria-label="Đóng">&times;</button>
+    <img id="lightbox-image" class="lightbox-image" alt="" />
+    <p id="lightbox-caption" class="lightbox-caption"></p>
   </div>
 
   <script src="/static/dashboard.js"></script>

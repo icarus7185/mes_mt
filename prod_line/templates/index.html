@@ -1,30 +1,30 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>prod_line</title>
+  <title>Production Line</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <h1>Dữ liệu MES từ xưởng (giả lập)</h1>
+  <h1>MES Data from the Shop Floor (Simulated)</h1>
 
   <div class="image-box">
-    <h2>Ảnh chụp bề mặt tấm thép</h2>
-    <img id="sent-image" src="/api/image/latest" alt="Sent image" />
+    <h2>Steel Surface Image Capture</h2>
+    <img id="sent-image" src="/api/image/latest" alt="Captured image" />
     <p>
-      Thời gian đã gửi: <span id="sent-at">--:--:--</span>
+      Sent at: <span id="sent-at">--:--:--</span>
       <span id="sent-status" class="status-badge"></span>
     </p>
   </div>
 
   <div class="records-box">
-    <h2>Thông số cảm biến trên dây chuyền</h2>
+    <h2>Production Line Sensor Readings</h2>
     <div class="records-scroll">
       <table class="records-table">
         <thead>
           <tr>
-            <th>Thời<br />gian</th>
-            <th>Trạng<br />thái</th>
+            <th>Time<br />stamp</th>
+            <th>Send<br />Status</th>
             <th>Lagging<br />kVarh</th>
             <th>Leading<br />kVarh</th>
             <th>CO2</th>

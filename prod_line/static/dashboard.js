@@ -7,10 +7,10 @@ function formatNumber(value) {
 function applyStatusBadge(el, success) {
   if (success === true) {
     el.className = "status-badge status-badge--success";
-    el.textContent = "Thành công";
+    el.textContent = "Success";
   } else if (success === false) {
     el.className = "status-badge status-badge--failure";
-    el.textContent = "Thất bại";
+    el.textContent = "Failed";
   } else {
     el.className = "status-badge";
     el.textContent = "--";

@@ -80,7 +80,7 @@ function renderAlbum(images) {
     img.alt = image.filename;
     img.tabIndex = 0;
     img.setAttribute("role", "button");
-    img.title = "Nhấn để phóng to";
+    img.title = "Click to enlarge";
 
     const caption = document.createElement("figcaption");
     caption.textContent = image.received_at;
@@ -208,11 +208,11 @@ function updateHeavyLoadStat(records) {
 function formatElapsed(elapsedMs) {
   const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
   if (totalSeconds < 60) {
-    return `${totalSeconds}s trước`;
+    return `${totalSeconds}s ago`;
   }
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  return `${minutes}m ${seconds}s trước`;
+  return `${minutes}m ${seconds}s ago`;
 }
 
 function updateFreshnessStat() {

@@ -10,14 +10,14 @@ class Settings(BaseModel):
     image_in_dir: Path = Path("prod_line/data/from_camera")
 
     # How often, in seconds, to pick and send a new image.
-    interval_seconds: float = 15.0
+    interval_seconds: float = 10.0
 
     # URL of the asst service's image-intake endpoint.
     asst_image_url: str = "http://localhost:8002/api/image"
 
     # Probability (0-1) that sending an image to asst is simulated as
     # failing (e.g. due to overload), instead of actually being sent.
-    image_send_failure_rate: float = 0.2
+    image_send_failure_rate: float = 0.1
 
     # CSV file that tabular records are randomly picked from.
     tabular_csv_path: Path = Path("prod_line/data/tabular/Steel_industry_data.csv")

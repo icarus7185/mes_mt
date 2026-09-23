@@ -12,9 +12,10 @@ class RecordHistoryState:
         self._lock = asyncio.Lock()
         self._records: deque[dict] = deque(maxlen=max_items)
 
-    async def add(self, record: dict) -> None:
+    async def add(self, record: dict, success: bool) -> None:
         entry = dict(record)
         entry["added_at"] = datetime.now().strftime("%H:%M:%S")
+        entry["send_success"] = success
         async with self._lock:
             self._records.appendleft(entry)
 

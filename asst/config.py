@@ -21,6 +21,9 @@ class Settings(BaseModel):
     # File name/path of the model weights within the repo.
     hf_model_filename: str = "steel_defect_yolo26s_seg_best.pt"
 
+    # Minimum confidence required for a YOLO detection.
+    yolo_confidence_threshold: float = 0.6
+
     # CSV file used to train the energy-usage prediction model.
     training_csv_path: Path = Path("asst/data/train/Steel_industry_data.csv")
 

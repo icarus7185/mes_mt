@@ -1,9 +1,15 @@
 """Background loop: every ``settings.interval_seconds``, send a random
 image from ``settings.image_in_dir`` to the asst service.
+
+To simulate an overloaded line, each send has a configurable probability
+(``settings.image_send_failure_rate``) of being skipped instead of
+actually sent. Whether the send succeeds or fails, the picked image is
+always shown on the index page, tagged with the outcome.
 """
 
 import asyncio
 import logging
+import random
 
 import httpx
 
@@ -23,20 +29,25 @@ async def send_once(client: httpx.AsyncClient) -> None:
         return
 
     data = image_path.read_bytes()
-    files = {"file": (image_path.name, data, "image/jpeg")}
-    try:
-        response = await client.post(settings.asst_image_url, files=files)
-        response.raise_for_status()
-    except httpx.HTTPError:
-        logger.exception(
-            "Failed to send %s to asst at %s",
-            image_path.name,
-            settings.asst_image_url,
-        )
-        return
+    success = random.random() >= settings.image_send_failure_rate
 
-    await producer_state.set_sent(data, image_path.name)
-    logger.info("Sent %s to asst", image_path.name)
+    if success:
+        files = {"file": (image_path.name, data, "image/jpeg")}
+        try:
+            response = await client.post(settings.asst_image_url, files=files)
+            response.raise_for_status()
+        except httpx.HTTPError:
+            logger.exception(
+                "Failed to send %s to asst at %s",
+                image_path.name,
+                settings.asst_image_url,
+            )
+            success = False
+    else:
+        logger.warning("Simulated overload: did not send %s to asst", image_path.name)
+
+    await producer_state.set_sent(data, image_path.name, success=success)
+    logger.info("%s %s to asst", "Sent" if success else "Did not send (simulated failure)", image_path.name)
 
 
 async def producer_loop() -> None:

@@ -20,6 +20,7 @@ image_out_service = ImageService(image_dir=settings.image_out_dir)
 yolo_service = YoloService(
     repo_id=settings.hf_model_repo_id,
     filename=settings.hf_model_filename,
+    confidence_threshold=settings.yolo_confidence_threshold,
 )
 
 

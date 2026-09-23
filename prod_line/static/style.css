@@ -63,3 +63,24 @@ body {
   line-height: 1.2;
   width: 1%;
 }
+
+.status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #777;
+  background: #eee;
+}
+
+.status-badge--success {
+  color: #0ca30c;
+  background: rgba(12, 163, 12, 0.13);
+}
+
+.status-badge--failure {
+  color: #d03b3b;
+  background: rgba(208, 59, 59, 0.13);
+}

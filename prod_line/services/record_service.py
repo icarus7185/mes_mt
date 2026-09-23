@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-DATE_FORMAT = "%d/%m/%Y %H:%M"
+DATE_FORMAT = "%d/%m/%Y %H:%M:%S"
 
 
 class RecordService:

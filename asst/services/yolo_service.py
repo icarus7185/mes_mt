@@ -10,9 +10,10 @@ from ultralytics import YOLO
 class YoloService:
     """Loads a YOLO model from the Hugging Face Hub and runs inference."""
 
-    def __init__(self, repo_id: str, filename: str) -> None:
+    def __init__(self, repo_id: str, filename: str, confidence_threshold: float) -> None:
         self.repo_id = repo_id
         self.filename = filename
+        self.confidence_threshold = confidence_threshold
         self.model: Optional[Any] = None
 
     def load_model(self) -> None:
@@ -23,7 +24,7 @@ class YoloService:
         """Run inference and return the plotted image and the detected
         class names, or ``(None, [])`` when nothing was detected.
         """
-        result = self.model.predict(image, imgsz=1024)[0]
+        result = self.model.predict(image, imgsz=1024, conf=self.confidence_threshold)[0]
         if result.boxes is None or len(result.boxes) == 0:
             return None, []
 

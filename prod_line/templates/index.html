@@ -11,7 +11,10 @@
   <div class="image-box">
     <h2>Ảnh chụp bề mặt tấm thép</h2>
     <img id="sent-image" src="/api/image/latest" alt="Sent image" />
-    <!-- <p>Thời gian đã gửi: <span id="sent-at">--:--:--</span></p> -->
+    <p>
+      Thời gian đã gửi: <span id="sent-at">--:--:--</span>
+      <span id="sent-status" class="status-badge"></span>
+    </p>
   </div>
 
   <div class="records-box">
@@ -21,6 +24,7 @@
         <thead>
           <tr>
             <th>Thời<br />gian</th>
+            <th>Trạng<br />thái</th>
             <th>Lagging<br />kVarh</th>
             <th>Leading<br />kVarh</th>
             <th>CO2</th>

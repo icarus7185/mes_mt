@@ -11,6 +11,7 @@ class LastSent:
     image_bytes: Optional[bytes] = None
     filename: Optional[str] = None
     sent_at: Optional[datetime] = None
+    success: Optional[bool] = None
 
 
 class ProducerState:
@@ -18,9 +19,11 @@ class ProducerState:
         self._lock = asyncio.Lock()
         self._last_sent = LastSent()
 
-    async def set_sent(self, data: bytes, filename: str) -> None:
+    async def set_sent(self, data: bytes, filename: str, success: bool) -> None:
         async with self._lock:
-            self._last_sent = LastSent(image_bytes=data, filename=filename, sent_at=datetime.now())
+            self._last_sent = LastSent(
+                image_bytes=data, filename=filename, sent_at=datetime.now(), success=success
+            )
 
     async def get(self) -> LastSent:
         async with self._lock:
@@ -28,6 +31,7 @@ class ProducerState:
                 image_bytes=self._last_sent.image_bytes,
                 filename=self._last_sent.filename,
                 sent_at=self._last_sent.sent_at,
+                success=self._last_sent.success,
             )
 
 

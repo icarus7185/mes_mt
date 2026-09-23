@@ -22,8 +22,12 @@ async def get_latest_meta() -> dict:
     """Return the file name and time the latest image was sent."""
     latest = await producer_state.get()
     if latest.sent_at is None:
-        return {"sent_at": None, "filename": None}
-    return {"sent_at": latest.sent_at.strftime("%H:%M:%S"), "filename": latest.filename}
+        return {"sent_at": None, "filename": None, "success": None}
+    return {
+        "sent_at": latest.sent_at.strftime("%H:%M:%S"),
+        "filename": latest.filename,
+        "success": latest.success,
+    }
 
 
 @router.get("/records")

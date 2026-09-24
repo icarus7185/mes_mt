@@ -30,15 +30,16 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
 
       # ultralytics pulls in torch; the CPU-only index avoids downloading
       # several GB of CUDA wheels the runner cannot use.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
-          pip install pytest
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements-dev.txt
 
       - name: Compile sources
         run: python -m compileall -q prod_line asst monitor
@@ -50,13 +51,14 @@ jobs:
         run: |
           python -c "import prod_line.main, asst.main, monitor.main; print('All apps imported')"
 
-      - name: Run tests
-        run: |
-          set +e
-          python -m pytest -q
-          code=$?
-          if [ "$code" -eq 5 ]; then
-            echo "::warning::No tests were collected."
-            exit 0
-          fi
-          exit "$code"
+      # Test settings (test paths, import mode) come from pytest.ini.
+      - name: Run unit tests
+        run: python -m pytest -q -ra --junitxml=test-results/junit.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/junit.xml
+          if-no-files-found: ignore

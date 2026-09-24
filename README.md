@@ -1,85 +1,124 @@
 # mes_mt
 
-Hệ thống giám sát lỗi thép bằng YOLO, gồm 3 ứng dụng FastAPI **độc lập**,
-mỗi ứng dụng chạy trên một cổng riêng và giao tiếp với nhau qua HTTP theo
-mô hình dây chuyền: `prod_line` → `asst` → `monitor`.
+A proof-of-concept monitoring system for a steel production line. It is made
+of 3 **independent** FastAPI apps. Each app runs on its own port, and they
+talk to each other over HTTP as a pipeline: `prod_line` → `asst` → `monitor`.
+
+The system runs two pipelines side by side:
+
+- **Surface defect detection**: camera images are checked by a YOLO model, and
+  only images with a detected defect reach the monitor.
+- **Energy usage prediction**: sensor records are sent without `Usage_kWh`, an
+  XGBoost model predicts it, and the monitor shows and logs the result.
 
 ```
-data/from_camera/  --(random)-->  prod_line  --POST-->  asst  --POST-->  monitor
-                                                   |
-                                          data/img_in/ (tạm)
-                                          data/img_out/ (khi có phát hiện)
-                                                                     |
-                                                              data/hist/ (tối đa 10 ảnh)
+prod_line/data/from_camera/  --(random)-->  prod_line  --POST /api/image-->   asst  --POST /api/image-->   monitor
+prod_line/data/tabular/*.csv --(next row)-> prod_line  --POST /api/record-->  asst  --POST /api/record-->  monitor
+                                                                               |                            |
+                                                                  asst/data/img_in/  (temporary)   monitor/data/img/ (max 10 images)
+                                                                  asst/data/img_out/ (on detection) monitor/data/tabular/records_history.csv
 ```
 
-## Cấu trúc thư mục
+![Feature demo](demo.gif)
 
-### `prod_line/` — Bộ mô phỏng camera, cổng `8001`
+## Services
 
-Cứ mỗi `settings.interval_seconds` giây (mặc định 10s), đọc ngẫu nhiên 1
-file ảnh trong `data/from_camera/` rồi gửi (`POST`) tới endpoint
-`/api/image` của `asst`. Trang chủ `GET /` hiển thị ảnh vừa gửi gần nhất
-và thời điểm đã gửi.
+### `prod_line/`: line simulator, port `8001`
 
-- `prod_line/producer.py` — vòng lặp nền chạy trong `lifespan` của app;
-  sau khi gửi thành công sẽ lưu ảnh + thời gian vào `prod_line/state.py`.
-- `prod_line/state.py` — nơi lưu tạm (trong bộ nhớ) ảnh gửi gần nhất.
-- `prod_line/routers/api.py` — `GET /api/image/latest`,
-  `GET /api/image/meta` phục vụ trang chủ.
-- `prod_line/routers/dashboard.py` — `GET /` render trang chủ.
-- `prod_line/services/image_service.py` — chọn ngẫu nhiên 1 file ảnh.
-- `prod_line/config.py` — `image_in_dir` (`data/from_camera`),
-  `interval_seconds`, `asst_image_url`.
+Simulates the camera and the sensors of the line with two background loops:
 
-### `asst/` — Bộ xử lý YOLO, cổng `8002`
+- **Images**: every `interval_seconds` (default 3 s), picks a random image
+  from `prod_line/data/from_camera/` and sends it to `asst` at `POST /api/image`.
+- **Records**: every `record_interval_seconds` (default 15 s), reads the next
+  row of `prod_line/data/tabular/Steel_industry_data.csv`, sets `date` to the
+  current time and `Usage_kWh` to `null`, and sends it to `asst` at
+  `POST /api/record`. Reading starts at a random row and moves forward
+  `record_skip` rows (default 2) each time.
 
-`POST /api/image` nhận ảnh từ `prod_line`, lưu tạm vào `data/img_in/`,
-rồi đưa qua model YOLO để nhận diện lỗi:
+To simulate an overloaded network, each send can be dropped on purpose
+(`image_send_failure_rate` = 10%, `record_send_failure_rate` = 20%). Every
+image and record is still shown on the page, marked **Success** or **Failed**.
 
-- **Nếu YOLO không phát hiện gì** → chỉ ghi log kết quả bình thường, xoá
-  file tạm, **không** lưu vào `data/img_out/` và **không** gửi cho
-  `monitor`.
-- **Nếu YOLO có phát hiện lỗi** → lưu ảnh kết quả vào `data/img_out/`
-  (tên file được nối thêm giờ:phút:giây lúc xử lý), xoá file ảnh gốc tạm
-  trong `data/img_in/`, gửi ảnh kết quả cho `monitor`, sau khi gửi thành
-  công thì xoá luôn file ảnh đó khỏi `data/img_out/`.
+The page `GET /` shows the last image with its send time and status, and a
+grid of the last 20 records. Loading the page also restarts record reading
+from a new random row.
 
-- `asst/routers/api.py` — endpoint lưu/xử lý/dọn dẹp/gửi tiếp nói trên.
-- `asst/services/image_service.py` — chuyển đổi bytes ⇄ ảnh, lưu file.
-- `asst/services/yolo_service.py` — tải model YOLO từ Hugging Face Hub và
-  chạy suy luận; `predict()` trả về `(None, [])` nếu không phát hiện gì,
-  hoặc `(ảnh_đã_vẽ, [tên_class, ...])` nếu có phát hiện.
-- `asst/config.py` — `image_in_dir`, `image_out_dir`, `monitor_image_url`,
-  repo/tên file model Hugging Face.
+- `prod_line/producer.py`: image loop.
+- `prod_line/record_producer.py`: record loop.
+- `prod_line/state.py`: last image sent (in memory).
+- `prod_line/record_state.py`: last 20 records (in memory).
+- `prod_line/services/image_service.py`: picks a random image file.
+- `prod_line/services/record_service.py`: walks through the CSV.
+- `prod_line/routers/`: `GET /`, `GET /api/image/latest`, `GET /api/image/meta`, `GET /api/records`.
+- `prod_line/config.py`: settings.
 
-### `monitor/` — Bảng giám sát, cổng `8003`
+### `asst/`: AI worker, port `8002`
 
-`POST /api/image` nhận ảnh kết quả từ `asst` và lưu (archive) vào
-`data/hist/`, chỉ giữ lại **tối đa 10 ảnh mới nhất** (ảnh cũ hơn sẽ tự
-động bị xoá). Trang `GET /` hiển thị:
+No web page. It loads the YOLO model from Hugging Face Hub at startup.
 
-- Ảnh nhận được gần nhất + thời gian nhận.
-- Album gồm toàn bộ ảnh hiện có trong `data/hist/`.
+`POST /api/image` saves the image temporarily to `asst/data/img_in/` and runs
+YOLO on it (confidence ≥ 0.6):
 
-- `monitor/routers/api.py` — `POST /api/image` (nhận + lưu),
-  `GET /api/image/latest`, `GET /api/image/meta` (ảnh/thời gian gần
-  nhất), `GET /api/hist` (danh sách album), `GET /api/hist/{filename}`
-  (lấy 1 ảnh trong album).
-- `monitor/services/history_service.py` — lưu ảnh vào `data/hist/` và tự
-  dọn bớt để chỉ giữ `hist_max_files` ảnh mới nhất (mặc định 10).
-- `monitor/templates/`, `monitor/static/` — giao diện dashboard + JS/CSS.
-- `monitor/config.py` — `hist_dir`, `hist_max_files`.
+- **No defect detected**: logs the result and deletes the temporary file.
+  Nothing is saved and nothing is sent to `monitor`.
+- **Defect detected**: saves the annotated image to `asst/data/img_out/` (the
+  file name gets the processing time `HHMMSS` appended), deletes the original
+  temporary file, and sends the annotated image to `monitor`. Once the send
+  succeeds, the annotated file is deleted too.
 
-## Cài đặt & chạy
+`POST /api/record` predicts `Usage_kWh` with the model in
+`asst/data/model/analyst_model.pkl`, fills it into the record, and sends the
+record to `monitor`.
+
+`GET /api/train` retrains that model from
+`asst/data/train/Steel_industry_data.csv` and returns its MSE and R².
+
+- `asst/routers/api.py`: the 3 endpoints above.
+- `asst/services/image_service.py`: bytes ⇄ image conversion, file saving.
+- `asst/services/yolo_service.py`: loads YOLO and runs detection; `predict()`
+  returns `(None, [])` when nothing is found, or
+  `(annotated_image, [class_name, ...])` otherwise.
+- `asst/services/analyst_service.py`: trains and runs the `Usage_kWh` model.
+- `asst/config.py`: settings.
+
+### `monitor/`: dashboard, port `8003`
+
+- `POST /api/image` stores the image from `asst` in `monitor/data/img/` and
+  keeps only the **10 newest** images (older ones are deleted).
+- `POST /api/record` adds the record to an in-memory list of the last 20
+  records and appends it to `monitor/data/tabular/records_history.csv`, which
+  keeps every record permanently.
+
+The page `GET /` refreshes every 2 seconds and shows:
+
+- 4 indicators: average predicted usage, trend compared to the previous
+  record, time since the last new record, and the share of records at
+  `Maximum_Load`.
+- A grid and a line chart of the predicted `Usage_kWh`.
+- The latest defect image and an album of the stored images (click to enlarge).
+
+- `monitor/routers/`: `GET /`, `POST /api/image`, `GET /api/image/latest`,
+  `GET /api/image/meta`, `GET /api/hist`, `GET /api/hist/{filename}`,
+  `POST /api/record`, `GET /api/records`.
+- `monitor/services/history_service.py`: image archive with the 10-image limit.
+- `monitor/services/record_service.py`: last 20 records (in memory).
+- `monitor/services/record_csv_service.py`: permanent CSV history.
+- `monitor/templates/`, `monitor/static/`: dashboard HTML, JS and CSS.
+- `monitor/config.py`: settings.
+
+## Installation and running
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Mở 3 terminal riêng, chạy từng service (chạy theo thứ tự nào cũng được —
-nếu service phía sau chưa lên thì service phía trước sẽ tự thử lại ở
-lượt kế tiếp):
+Sample images are not stored in Git (`*.jpg` is ignored). Put some `.jpg`,
+`.jpeg`, `.png` or `.bmp` steel surface images in `prod_line/data/from_camera/`
+before starting.
+
+Open 3 terminals and start one service in each. The order does not matter:
+while a downstream service is not up yet, sends to it are marked **Failed**
+and the next tick simply tries again.
 
 ```bash
 uvicorn monitor.main:app --port 8003
@@ -93,28 +132,59 @@ uvicorn asst.main:app --port 8002
 uvicorn prod_line.main:app --port 8001
 ```
 
-Sau đó mở:
+The first start of `asst` needs internet access to download the YOLO model
+from Hugging Face Hub; it is cached afterwards.
 
-- http://localhost:8001/ — xem `prod_line` vừa gửi ảnh gì, lúc nào.
-- http://localhost:8003/ — xem dashboard `monitor` (ảnh mới nhất + album).
+A trained energy model is already included in the repository. To retrain it
+(for example after changing the training CSV):
 
-**Lưu ý:** tất cả đường dẫn thư mục (`data/...`, `logs/...`) đều là
-đường dẫn tương đối, nên phải chạy `uvicorn` từ thư mục gốc của dự án.
+```bash
+curl http://localhost:8002/api/train
+```
 
-**Note** Trên window 11 nếu bị lỗi không chạy được pandas, numpy thì có thể phải tắt Smart App Control (SAC). Đây không phải lỗi phần mềm.
+Then open:
 
-## Ghi log
+- http://localhost:8001/: what `prod_line` is sending, and whether each send succeeded.
+- http://localhost:8003/: the `monitor` dashboard (energy predictions, latest defect, album).
 
-Mỗi app ghi log ra file riêng trong thư mục `logs/` (tạo tương đối theo
-thư mục đang chạy service đó), đồng thời in ra console:
+**Note:** all paths (`*/data/...`, `logs/...`) are relative, so `uvicorn`
+must be started from the project root.
 
-- `logs/prod_line.log` — thời gian + tên file đã gửi cho `asst`.
-- `logs/asst.log` — thời gian + tên file của mỗi request nhận được, tên
-  file đã lưu khi có phát hiện lỗi (kèm danh sách class), và thời điểm
-  đã gửi tiếp cho `monitor`.
-- `logs/monitor.log` — thời gian + tên file của mỗi request nhận được từ
-  `asst`.
+**Note:** on Windows 11, if pandas or numpy fails to load, you may need to
+turn off Smart App Control (SAC). This is not a bug in the project.
 
+## Tests
 
-### DEMO
-![Demo tính năng](demo.gif)
+```bash
+pip install -r requirements-dev.txt
+```
+
+```bash
+python -m pytest -q
+```
+
+The unit tests in `tests/` do not start the services, download the YOLO
+model, or make network calls. The GitHub Actions workflow
+(`.github/workflows/ci.yml`) runs them on every pull request to `main`.
+
+## Logging
+
+Each app writes its own log file in `logs/` (relative to the directory the
+service is started from) and also prints to the console:
+
+- `logs/prod_line.log`: each image and record sent to `asst`, or skipped by a
+  simulated failure.
+- `logs/asst.log`: each request received, the saved file name and classes
+  when a defect is detected, each predicted `Usage_kWh`, and each forward to
+  `monitor`.
+- `logs/monitor.log`: each image and record received from `asst`.
+
+## Documentation
+
+- `docs/BUSINESS_REQUIREMENTS.md`: business goals and scope.
+- `docs/SPEC_SYSTEM_OVERVIEW.md`: architecture and data flow across services.
+- `prod_line/docs/SPEC_PROD_LINE.md`, `asst/docs/SPEC_ASST.md`,
+  `monitor/docs/SPEC_MONITOR.md`: specification of each service.
+- `docs/api-spec.md`: API reference.
+- `docs/DOMAIN_MODEL.md`: data objects and classes.
+- `docs/CODING_RULES.md`: Python coding rules.

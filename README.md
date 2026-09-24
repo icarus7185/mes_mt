@@ -114,3 +114,7 @@ thư mục đang chạy service đó), đồng thời in ra console:
   đã gửi tiếp cho `monitor`.
 - `logs/monitor.log` — thời gian + tên file của mỗi request nhận được từ
   `asst`.
+
+
+### DEMO
+![Demo tính năng](demo.gif)

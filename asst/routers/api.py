@@ -26,7 +26,11 @@ yolo_service = YoloService(
 
 @router.get("/train")
 def train_analyst_model() -> dict:
-    """Train the energy-usage model using the configured CSV file."""
+    """Train the energy-usage model using the configured CSV file.
+
+    Returns ``{"status": "success", "mse", "r2", "model_path"}``. The new
+    model is used from the next ``POST /api/record`` on, without a restart.
+    """
     result = train_model(settings.training_csv_path)
     return {"status": "success", **result}
 
@@ -35,6 +39,9 @@ def train_analyst_model() -> dict:
 async def receive_record(request: Request, record: dict) -> dict:
     """Predict Usage_kWh for a tabular record from prod_line, fill it in,
     and forward the record to monitor.
+
+    ``record`` is keyed by the raw CSV column names, with ``Usage_kWh`` null.
+    Returns ``{"status": "ok", "Usage_kWh": <predicted value>}``.
     """
     logger.info("Received record date=%s", record.get("date"))
 
@@ -55,6 +62,10 @@ async def receive_record(request: Request, record: dict) -> dict:
 async def receive_image(request: Request, file: UploadFile) -> dict:
     """Save the uploaded image, run YOLO on it, save+forward the result to
     monitor, and clean up the temporary input/output files along the way.
+
+    Returns ``{"status": "normal", "file": <name>}`` when nothing is
+    detected (nothing is sent to monitor), or ``{"saved_as": <name>,
+    "classes": [<class names>]}`` when a defect is found and forwarded.
     """
     logger.info("Received request file=%s", file.filename)
 

@@ -23,6 +23,10 @@ image_service = ImageService(image_dir=settings.image_in_dir)
 
 
 async def send_once(client: httpx.AsyncClient) -> None:
+    """Pick a random image and send it to asst, unless the simulated failure
+    roll skips it. Sent or not, the image and its outcome are stored in
+    ``producer_state`` for the index page.
+    """
     image_path = image_service.get_random_image_path()
     if image_path is None:
         logger.warning("No source images found in %s", settings.image_in_dir)
@@ -51,6 +55,9 @@ async def send_once(client: httpx.AsyncClient) -> None:
 
 
 async def producer_loop() -> None:
+    """Call ``send_once`` every ``interval_seconds`` until cancelled; a failed
+    tick is logged and the loop keeps going.
+    """
     async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
         while True:
             try:

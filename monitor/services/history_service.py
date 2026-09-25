@@ -13,6 +13,9 @@ class HistoryService:
         self.max_files = max_files
 
     def save(self, data: bytes, filename: str) -> Path:
+        """Write the image into the archive and return its path, then delete
+        the oldest images beyond ``max_files``.
+        """
         self.hist_dir.mkdir(parents=True, exist_ok=True)
         out_path = self.hist_dir / filename
         out_path.write_bytes(data)

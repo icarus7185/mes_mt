@@ -21,6 +21,107 @@ prod_line/data/tabular/*.csv --(next row)-> prod_line  --POST /api/record-->  as
 
 ![Feature demo](demo.gif)
 
+## Project structure
+
+```
+mes_mt/
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   ├── feature_request.md
+│   │   └── spike_investigation.md
+│   └── workflows/
+│       └── ci.yml                      # runs the tests on every PR to main
+├── docs/
+│   ├── BUSINESS_REQUIREMENTS.md
+│   ├── CODING_RULES.md
+│   ├── DOMAIN_MODEL.md
+│   ├── SPEC_SYSTEM_OVERVIEW.md
+│   └── api-spec.md
+├── prod_line/                          # line simulator, port 8001
+│   ├── data/
+│   │   ├── from_camera/                # source images (from test_images.zip)
+│   │   └── tabular/
+│   │       └── Steel_industry_data.csv # source sensor records
+│   ├── docs/
+│   │   └── SPEC_PROD_LINE.md
+│   ├── routers/
+│   │   ├── api.py
+│   │   └── dashboard.py
+│   ├── services/
+│   │   ├── image_service.py
+│   │   └── record_service.py
+│   ├── static/
+│   │   ├── dashboard.js
+│   │   └── style.css
+│   ├── templates/
+│   │   └── index.html
+│   ├── config.py
+│   ├── main.py
+│   ├── producer.py
+│   ├── record_producer.py
+│   ├── record_state.py
+│   └── state.py
+├── asst/                               # AI worker, port 8002
+│   ├── data/
+│   │   ├── img_in/                     # temporary input images
+│   │   ├── img_out/                    # annotated images with a defect
+│   │   ├── model/
+│   │   │   └── analyst_model.pkl       # trained Usage_kWh model
+│   │   └── train/
+│   │       └── Steel_industry_data.csv # training data
+│   ├── docs/
+│   │   └── SPEC_ASST.md
+│   ├── routers/
+│   │   └── api.py
+│   ├── services/
+│   │   ├── analyst_service.py
+│   │   ├── image_service.py
+│   │   └── yolo_service.py
+│   ├── config.py
+│   └── main.py
+├── monitor/                            # dashboard, port 8003
+│   ├── data/
+│   │   ├── img/                        # the 10 newest defect images
+│   │   └── tabular/                    # records_history.csv
+│   ├── docs/
+│   │   └── SPEC_MONITOR.md
+│   ├── routers/
+│   │   ├── api.py
+│   │   └── dashboard.py
+│   ├── services/
+│   │   ├── history_service.py
+│   │   ├── record_csv_service.py
+│   │   └── record_service.py
+│   ├── static/
+│   │   ├── dashboard.js
+│   │   └── style.css
+│   ├── templates/
+│   │   └── dashboard.html
+│   ├── config.py
+│   └── main.py
+├── tests/
+│   ├── conftest.py
+│   ├── prod_line/                      # test_image_service.py, test_producer.py,
+│   │                                   # test_record_producer.py, test_record_service.py,
+│   │                                   # test_routes.py, test_state.py
+│   ├── asst/                           # conftest.py, test_analyst_service.py,
+│   │                                   # test_image_service.py, test_routes.py,
+│   │                                   # test_yolo_service.py
+│   └── monitor/                        # test_history_service.py, test_record_csv_service.py,
+│                                       # test_record_service.py, test_routes.py
+├── logs/                               # created at runtime, one log file per service
+├── demo.gif
+├── pytest.ini
+├── requirements.txt
+├── requirements-dev.txt
+└── README.md
+```
+
+Empty `data/` folders hold a `.placeholder` file so that Git keeps them. The
+services only read files with the expected extension, so the placeholder is
+never picked up as data.
+
 ## Services
 
 ### `prod_line/`: line simulator, port `8001`
@@ -112,9 +213,39 @@ The page `GET /` refreshes every 2 seconds and shows:
 pip install -r requirements.txt
 ```
 
-Sample images are not stored in Git (`*.jpg` is ignored). Put some `.jpg`,
-`.jpeg`, `.png` or `.bmp` steel surface images in `prod_line/data/from_camera/`
-before starting.
+### Sample images
+
+The sample steel surface images come packed in
+`prod_line/data/from_camera/test_images.zip` (about 430 MB, 5,506 `.jpg`
+files). Before starting, extract it **in that same folder** and then delete the
+zip file. The images sit at the top level of the archive, so they land
+directly in `prod_line/data/from_camera/`.
+
+Linux / macOS / Git Bash:
+
+```bash
+unzip prod_line/data/from_camera/test_images.zip -d prod_line/data/from_camera/
+```
+
+```bash
+rm prod_line/data/from_camera/test_images.zip
+```
+
+Windows PowerShell:
+
+```powershell
+Expand-Archive -Path prod_line/data/from_camera/test_images.zip -DestinationPath prod_line/data/from_camera/
+```
+
+```powershell
+Remove-Item prod_line/data/from_camera/test_images.zip
+```
+
+Afterwards `prod_line/data/from_camera/` should contain only `.jpg` files. You
+can also add your own `.jpg`, `.jpeg`, `.png` or `.bmp` images there. Extracted
+images are not tracked by Git (`*.jpg` is ignored).
+
+### Running
 
 Open 3 terminals and start one service in each. The order does not matter:
 while a downstream service is not up yet, sends to it are marked **Failed**

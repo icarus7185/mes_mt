@@ -72,6 +72,16 @@ def test_unknown_history_image_returns_404(client: TestClient) -> None:
     assert client.get("/api/hist/missing.jpg").status_code == 404
 
 
+def test_placeholder_is_not_listed_or_served(client: TestClient, hist_dir: Path) -> None:
+    hist_dir.mkdir(parents=True)
+    (hist_dir / ".placeholder").write_bytes(b"")
+
+    assert client.get("/api/image/latest").status_code == 404
+    assert client.get("/api/image/meta").json() == {"received_at": None, "filename": None}
+    assert client.get("/api/hist").json() == {"images": []}
+    assert client.get("/api/hist/.placeholder").status_code == 404
+
+
 def test_history_image_outside_archive_is_refused(hist_dir: Path) -> None:
     hist_dir.mkdir(parents=True)
     (hist_dir.parent / "secret.txt").write_text("secret")

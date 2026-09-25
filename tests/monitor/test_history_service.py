@@ -43,3 +43,24 @@ def test_save_with_same_name_overwrites(tmp_path: Path) -> None:
 
     assert [p.name for p in service.list_files()] == ["alert.jpg"]
     assert (tmp_path / "alert.jpg").read_bytes() == b"second"
+
+
+def test_list_files_ignores_non_image_files(tmp_path: Path) -> None:
+    (tmp_path / ".placeholder").write_bytes(b"")
+    (tmp_path / "notes.txt").write_bytes(b"")
+    (tmp_path / "alert.JPG").write_bytes(b"image")
+
+    service = HistoryService(hist_dir=tmp_path, max_files=10)
+
+    assert [p.name for p in service.list_files()] == ["alert.JPG"]
+
+
+def test_save_never_deletes_the_placeholder(tmp_path: Path) -> None:
+    _write_with_age(tmp_path / ".placeholder", age_seconds=1000)
+    _write_with_age(tmp_path / "old.jpg", age_seconds=100)
+    service = HistoryService(hist_dir=tmp_path, max_files=1)
+
+    service.save(b"image", "new.jpg")
+
+    assert (tmp_path / ".placeholder").exists()
+    assert not (tmp_path / "old.jpg").exists()

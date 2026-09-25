@@ -9,7 +9,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Response, UploadFile
 
 from monitor.config import settings
-from monitor.services.history_service import HistoryService
+from monitor.services.history_service import IMAGE_EXTENSIONS, HistoryService
 from monitor.services.record_csv_service import RecordCsvService
 from monitor.services.record_service import RecordHistoryService
 
@@ -84,6 +84,10 @@ async def get_history_image(filename: str) -> Response:
     """Return one archived image by file name."""
     path = (settings.hist_dir / filename).resolve()
     hist_root = settings.hist_dir.resolve()
-    if not path.is_relative_to(hist_root) or not path.is_file():
+    if (
+        not path.is_relative_to(hist_root)
+        or not path.is_file()
+        or path.suffix.lower() not in IMAGE_EXTENSIONS
+    ):
         raise HTTPException(status_code=404, detail="Image not found")
     return Response(content=path.read_bytes(), media_type="image/jpeg")

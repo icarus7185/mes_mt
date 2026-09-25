@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
+
 
 class HistoryService:
     """Saves images into ``self.hist_dir``, keeping only the ``max_files`` newest."""
@@ -18,10 +20,14 @@ class HistoryService:
         return out_path
 
     def list_files(self) -> list[Path]:
-        """Return archived files, newest first."""
+        """Return archived image files, newest first."""
         if not self.hist_dir.is_dir():
             return []
-        files = [p for p in self.hist_dir.iterdir() if p.is_file()]
+        files = [
+            p
+            for p in self.hist_dir.iterdir()
+            if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS
+        ]
         return sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)
 
     def _enforce_limit(self) -> None:

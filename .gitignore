@@ -220,4 +220,4 @@ __marimo__/
 .vscode/
 
 *.jpg
-/monitor/data/tabular/
+/monitor/data/tabular/*.csv

@@ -27,6 +27,11 @@ class RecordCsvService:
         self.csv_path = csv_dir / filename
 
     def append(self, record: dict) -> None:
+        """Append ``record`` as one row, with ``received_at`` added.
+
+        Writes the header first when the file doesn't exist yet. Fields not in
+        ``COLUMNS`` are ignored.
+        """
         self.csv_path.parent.mkdir(parents=True, exist_ok=True)
         is_new_file = not self.csv_path.exists()
 

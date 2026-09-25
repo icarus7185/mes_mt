@@ -24,7 +24,12 @@ class RecordService:
         self._position = random.randrange(len(self._data))
 
     def get_next_record(self) -> dict:
-        """Return the record at the current position, then advance by ``skip``."""
+        """Return the record at the current position, then advance by ``skip``
+        (wrapping at the end of the file).
+
+        The record is a dict keyed by the CSV column names, with ``date`` set to
+        now and ``Usage_kWh`` set to None.
+        """
         row = self._data.iloc[self._position]
         record = {
             column: (value.item() if hasattr(value, "item") else value)

@@ -33,6 +33,12 @@ def _prepare_features(
     data: pd.DataFrame,
     feature_encoders: dict[str, LabelEncoder] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, LabelEncoder]]:
+    """Rename columns, drop ``DROPPED_COLUMNS`` and label-encode text columns.
+
+    Shared by training and prediction. Pass the saved ``feature_encoders``
+    when predicting; without them, new encoders are fitted on ``data``.
+    Returns the feature table and the encoders used.
+    """
     data = (
         data.rename(columns=COLUMN_RENAMES)
         .drop(columns=DROPPED_COLUMNS, errors="ignore")
@@ -54,7 +60,12 @@ def train_model(
     training_csv_path: str | Path = "Steel_industry_data.csv",
     model_path: str | Path = DEFAULT_MODEL_PATH,
 ) -> dict[str, float | str]:
-    """Train the Usage_kWh regression model and save its metadata."""
+    """Train the Usage_kWh regression model and save its metadata.
+
+    Saves the model, feature column order and encoders to ``model_path``,
+    and returns ``{"mse", "r2", "model_path"}`` measured on a 25% test split.
+    Raises ValueError if the CSV has no Usage_kWh column.
+    """
     data = pd.read_csv(training_csv_path).rename(columns=COLUMN_RENAMES)
     if TARGET_COLUMN not in data.columns:
         raise ValueError(f"Training CSV must contain the '{TARGET_COLUMN}' column")
@@ -128,7 +139,11 @@ def predict(
 
 
 def predict_one(record: dict, model_path: str | Path = DEFAULT_MODEL_PATH) -> float:
-    """Predict Usage_kWh for a single record (as sent live by prod_line)."""
+    """Predict Usage_kWh for a single record (as sent live by prod_line).
+
+    The model is loaded from disk on every call. Raises FileNotFoundError if
+    it has not been trained yet, and ValueError if a feature column is missing.
+    """
     artifact = _load_artifact(model_path)
     data = pd.DataFrame([record]).rename(columns=COLUMN_RENAMES)
     prediction = _predict_features(data, artifact)[0]

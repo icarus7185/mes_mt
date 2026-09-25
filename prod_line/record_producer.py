@@ -25,6 +25,10 @@ record_service = RecordService(csv_path=settings.tabular_csv_path, skip=settings
 
 
 async def send_record_once(client: httpx.AsyncClient) -> None:
+    """Read the next CSV record and send it to asst, unless the simulated
+    failure roll skips it. Sent or not, the record and its outcome are added
+    to ``record_history_state`` for the index page.
+    """
     record = record_service.get_next_record()
     success = random.random() >= settings.record_send_failure_rate
 
@@ -50,6 +54,9 @@ async def send_record_once(client: httpx.AsyncClient) -> None:
 
 
 async def record_producer_loop() -> None:
+    """Call ``send_record_once`` every ``record_interval_seconds`` until
+    cancelled; a failed tick is logged and the loop keeps going.
+    """
     async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
         while True:
             try:

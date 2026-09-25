@@ -37,7 +37,7 @@ async def receive_image(file: UploadFile) -> dict:
 
 @router.get("/image/latest")
 async def get_latest_image() -> Response:
-    """Return the most recently archived image."""
+    """Return the most recently archived image as JPEG, or 404 if none yet."""
     files = history_service.list_files()
     if not files:
         raise HTTPException(status_code=404, detail="No image received yet")
@@ -46,7 +46,11 @@ async def get_latest_image() -> Response:
 
 @router.get("/image/meta")
 async def get_latest_meta() -> dict:
-    """Return the file name and time the latest image was received."""
+    """Return the file name and time the latest image was received.
+
+    Returns ``{"received_at": "HH:MM:SS", "filename": <name>}``, with both
+    fields null when no image has been received yet.
+    """
     files = history_service.list_files()
     if not files:
         return {"received_at": None, "filename": None}
@@ -55,7 +59,10 @@ async def get_latest_meta() -> dict:
 
 @router.get("/hist")
 async def list_history() -> dict:
-    """List the archived images, newest first, for the dashboard album."""
+    """List the archived images, newest first, for the dashboard album.
+
+    Returns ``{"images": [{"filename", "received_at"}, ...]}``.
+    """
     return {
         "images": [
             {"filename": path.name, "received_at": _received_at(path)}
@@ -66,7 +73,11 @@ async def list_history() -> dict:
 
 @router.post("/record")
 async def receive_record(record: dict) -> dict:
-    """Store a predicted tabular record pushed by asst."""
+    """Store a predicted tabular record pushed by asst.
+
+    The record goes into the in-memory dashboard grid and is appended to the
+    permanent CSV history. Returns ``{"status": "ok"}``.
+    """
     logger.info("Received record date=%s Usage_kWh=%s", record.get("date"), record.get("Usage_kWh"))
     record_history_service.add(record)
     record_csv_service.append(record)
@@ -81,7 +92,11 @@ async def list_records() -> dict:
 
 @router.get("/hist/{filename}")
 async def get_history_image(filename: str) -> Response:
-    """Return one archived image by file name."""
+    """Return one archived image by file name.
+
+    Returns 404 if the file is missing, is not an image (e.g.
+    ``.placeholder``), or resolves outside the archive folder.
+    """
     path = (settings.hist_dir / filename).resolve()
     hist_root = settings.hist_dir.resolve()
     if (
